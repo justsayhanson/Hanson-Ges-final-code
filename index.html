@@ -1,0 +1,1778 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hanson's Quiz</title>
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(-45deg, #f3ec78, #af4261, #43cea2, #185a9d);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  padding: 20px;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+@keyframes gradientBG {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+.quiz-container, .intro {
+  max-width: 700px;
+  margin: auto;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
+  animation: fadeIn 1s ease;
+  color: #fff;
+}
+.quiz-container { display: none; }
+@keyframes fadeIn { from {opacity: 0; transform: translateY(20px);} to {opacity: 1; transform: translateY(0);} }
+.intro h1 {
+  font-size: 28px; font-weight: bold; margin-bottom: 10px;
+  background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.question { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #fff; }
+.options button {
+  display: block; width: 100%; padding: 12px; margin: 8px 0;
+  border: none; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff; font-size: 16px; cursor: pointer;
+  transition: all 0.3s ease;
+}
+.options button:hover { background: rgba(255, 255, 255, 0.35); transform: scale(1.03); }
+.option.selected { background: linear-gradient(135deg, #43cea2, #185a9d); border: 2px solid #fff; }
+#next-btn, #prev-btn, #submit-btn, #start-btn, #restart-btn, #passcode-btn {
+  margin-top: 20px; padding: 14px 24px;
+  border: none; border-radius: 30px;
+  cursor: pointer; font-size: 16px; font-weight: 600;
+  background: linear-gradient(135deg, #ff9a9e, #fad0c4); color: #333;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease;
+  width: 95%; max-width: 500px;
+}
+#next-btn:hover, #prev-btn:hover, #submit-btn:hover,
+#start-btn:hover, #restart-btn:hover, #passcode-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+@keyframes pulse { 0%{transform:scale(1);} 50%{transform:scale(1.15);} 100%{transform:scale(1);} }
+#start-btn, #begin-btn, #restart-btn {
+  animation: pulse 1.5s infinite;
+  font-size: 22px;
+  padding: 20px 40px;
+  border-radius: 35px;
+  background: linear-gradient(135deg, #ff512f, #dd2476);
+  color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+.progress-container {
+  width: 100%; background: rgba(255,255,255,0.2);
+  border-radius: 15px; margin-bottom: 15px;
+  height: 20px; overflow: hidden;
+}
+.progress-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #ff512f, #dd2476);
+  color: white; font-size: 12px; line-height: 20px;
+  border-radius: 15px; text-align: center;
+  transition: width 0.5s ease-in-out;
+}
+.review {
+  margin-top: 20px; padding: 15px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px; text-align: left;
+  font-size: 14px; color: #fff;
+}
+#timer {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 15px;
+  color: #43cea2;
+  text-shadow: 0 0 10px #43cea2, 0 0 20px #43cea2;
+  transition: all 0.5s ease;
+}
+#timer.warning {
+  color: #ff4d4d;
+  text-shadow: 0 0 10px #ff4d4d, 0 0 20px #ff4d4d;
+  animation: pulse 1s infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- PASSCODE SCREEN -->
+<div class="intro" id="passcode-screen">
+  <h1>🔒 Secure Access</h1>
+  <p>Enter Passcode to continue</p>
+  <div style="display:flex; align-items:center; justify-content:center; width:95%; max-width:500px;
+    margin:auto; border-radius:12px; overflow:hidden; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    <input type="password" id="passcode" placeholder="Enter passcode"
+           style="flex:1; padding:18px; font-size:20px; border:none; outline:none; background:transparent; color:#fff;" />
+    <button id="toggle-pass"
+            style="padding:18px; border:none; background:rgba(255,255,255,0.2); color:#fff; cursor:pointer; font-size:20px;">👁</button>
+  </div>
+  <br>
+  <button id="passcode-btn">Unlock</button>
+  <p id="passcode-error" style="color:red; display:none; margin-top:10px;">❌ Wrong passcode, try again!</p>
+</div>
+
+<!-- INTRO PAGE -->
+<div class="intro" id="intro">
+  <h1>GES PEOPLES AND CULTURE STUDY QUIZ</h1>
+  <p style="font-style: italic; font-size: 14px;">By Hanson Solomon Michael (LLB1)</p>
+  <br>
+  <input type="text" id="playerName" placeholder="Enter your name"
+         style="padding:14px; font-size:18px; border-radius:12px; border:none; width:95%; max-width:500px;" />
+  <br><br>
+  <button id="start-btn">Start Quiz</button>
+</div>
+
+<!-- QUIZ PAGE -->
+<div class="quiz-container" id="quiz-container">
+  <div id="timer">30:00</div>
+  <div class="progress-container"><div class="progress-bar" id="progress-bar">0%</div></div>
+  <div id="question-info"></div>
+  <div id="quiz"></div>
+  <button id="prev-btn">Previous</button>
+  <button id="next-btn" disabled>Next</button>
+  <button id="submit-btn" disabled style="display:none;">Submit</button>
+  <div id="result"></div>
+</div>
+
+<script>
+const questionsBank = [
+      {  
+        question: "Q1: Which of the following was the main political system of the Yoruba before 1800?",  
+        options: ["(A) Gerontocracy","(B) Theocratic Monarchy","(C) Constitutional Monarchy","(D) Feudal System"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q2: The spiritual and political head of the Yoruba people in Ife is known as the",  
+        options: ["(A) Ooni","(B) Alaafin","(C) Oba","(D) Olubaba"],  
+        answer: 0  
+      },  
+      {  
+        question: "Q3: Which of the following was the most prominent Yoruba Kingdom before 1800?",  
+        options: ["(A) Benin","(B) Ife","(C) Oyo","(D) Ijebu"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q4: What was the title of the king in the Oyo Empire?",  
+        options: ["(A) Obong","(B) Obi","(C) Sultan","(D) Alaafin"],  
+        answer: 3  
+      },  
+      {  
+        question: "Q5: The Oyo Mesi in Yoruba political culture served as the",  
+        options: ["(A) Military Commanders","(B) Priests","(C) Kingmakers and advisers","(D) Tax Collectors"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q6: Which ethnic group is associated with the Nok culture?",  
+        options: ["(A) Yoruba","(B) Hausa","(C) Igbo","(D) Jukun"],  
+        answer: 1  
+      },  
+      {  
+        question: "Q7: The Nok culture is particularly famous for its",  
+        options: ["(A) Bronze masks","(B) Terracotta sculptures","(C) Wooden carvings","(D) Wall paintings"],  
+        answer: 1  
+      },  
+      {  
+        question: "Q8: Which of these is a major Igbo festival that predates colonialism?",  
+        options: ["(A) New Yam Festival","(B) Sallah","(C) Argungu","(D) Osun Festival"],  
+        answer: 0  
+      },  
+      {  
+        question: "Q9: The Igbo traditional political structure before 1800 can be best described as",  
+        options: ["(A) Centralized Monarchy","(B) Federalized Monarchy","(C) Gerontocracy and Acephalous Society","(D) Military Dictatorship"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q10: The Hausa city-states were known as",  
+        options: ["(A) Emirates","(B) Oyo towns","(C) Zangons","(D) Bakwai"],  
+        answer: 0  
+      },  
+      {  
+        question: "Q11: The Hausa Bakwai are believed to be",  
+        options: ["(A) Slave camps","(B) Ancient cities founded by foreign traders","(C) The original seven Hausa states","(D) Islamic shrines"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q12: Which of these states was part of Hausa Bakwai?",  
+        options: ["(A) Ife","(B) Katsina","(C) Calabar","(D) Aba"],  
+        answer: 1  
+      },  
+      {  
+        question: "Q13: The introduction of Islam into the Hausa states was largely through?",  
+        options: ["(A) Military Conquest","(B) Missionaries","(C) Trade and Scholarship","(D) Colonization"],  
+        answer: 2  
+      },  
+      {  
+        question: "Q14: Which minority group is known for it's unique bronze art similar to that of Benin and Ife?",  
+        options: ["(A) Nupe","(B) Ibibio","(C) Jukun","(D) Tiv"],  
+        answer: 0  
+      },  
+      {  
+        question: "Q15: Which of these was an ancient kingdom located in what is now, Cross Rivers State?",  
+        options: ["(A) Nri","(B) Kanem","(C) Kwararafa","(D) Akwa Akpa"],  
+        answer: 3  
+      },  
+      {  
+        question: "Q16: which of the following Nigerian ancient civilizations is most associated with bronze casting?",  
+        options: ["(A) Nok","(B) Ife","(C) Tiv","(D) Ibadan"],  
+        answer: 1  
+      },  
+      {  
+        question: "17. The title 'Oba' is commonly used by rulers in which region of Nigeria?",  
+        options: ["(A) North", "(B) East", "(C) South-West", "(D) South-South"],  
+        answer: 2  
+      },  
+      {  
+        question: "18. The Igbo-Ukwu archaeological site is important because it reveals—",  
+        options: ["(A) Evidence of iron smelting", "(B) Early Islamic influence", "(C) A complex metalworking culture", "(D) Slave trading posts"],  
+        answer: 2  
+      },  
+      {  
+        question: "19. The Bini Kingdom is best known for?",  
+        options: ["(A) Rock paintings", "(B) Large-scale agriculture", "(C) Bronze sculptures and royal court art", "(D) Islamic scholarship"],  
+        answer: 2  
+  },  
+  {  
+    question: "20. Which of these Nigerian ethnic groups practiced a confederal form of government before 1800?",  
+    options: ["(A) Yoruba", "(B) Hausa", "(C) Igbo", "(D) Nupe"],  
+    answer: 0  
+  },  
+  {  
+    question: "21. Which European country first established formal colonial rule in Nigeria?",  
+    options: ["(A) Germany", "(B) Portugal", "(C) Britain", "(D) France"],  
+    answer: 2  
+  },  
+  {  
+    question: "22. The annexation of Lagos in 1861 was done through which agreement?",  
+    options: ["(A) Treaty of Egun", "(B) Treaty of Berlin", "(C) Treaty of Lagos", "(D) Treaty of Cession"],  
+    answer: 3  
+  },  
+  {  
+    question: "23. Which organization was responsible for governing southern Nigeria before formal colonial administration?",  
+    options: ["(A) British Colonial Company", "(B) Royal Niger Company", "(C) United African Company", "(D) British Trading Council"],  
+    answer: 1  
+  },  
+  {  
+    question: "24. The Royal Niger Company was headed by:",  
+    options: ["(A) Lord Lugard", "(B) Sir George Goldie", "(C) Hugh Clifford", "(D) Macpherson"],  
+    answer: 1  
+  },  
+  {  
+    question: "25. The Berlin Conference of 1884–1885 was important because it:",  
+    options: ["(A) Gave Nigeria independence", "(B) Divided Africa among European powers", "(C) United African states", "(D) Introduced colonial taxes"],  
+    answer: 1  
+  },  
+  {  
+    question: "26. British conquest of Northern Nigeria was completed by:",  
+    options: ["(A) 1890", "(B) 1900", "(C) 1903", "(D) 1914"],  
+    answer: 2  
+  },  
+  {  
+    question: "27. The amalgamation of the Northern and Southern Protectorates of Nigeria took place in:",  
+    options: ["(A) 1906", "(B) 1914", "(C) 1922", "(D) 1931"],  
+    answer: 1  
+  },  
+  {  
+    question: "28. The main reason for the amalgamation of Nigeria in 1914 was to:",  
+    options: ["(A) Give independence", "(B) Increase British settlers", "(C) Ensure administrative efficiency", "(D) Promote democracy"],  
+    answer: 2  
+  },  
+  {  
+    question: "29. The person who amalgamated Nigeria in 1914 was:",  
+    options: ["(A) Hugh Clifford", "(B) Sir George Goldie", "(C) Lord Lugard", "(D) Macpherson"],  
+    answer: 2  
+  },  
+  {  
+    question: "30. The first capital of colonial Nigeria was:",  
+    options: ["(A) Calabar", "(B) Lagos", "(C) Kaduna", "(D) Lokoja"],  
+    answer: 1  
+  },  
+  {  
+    question: "31. The system of administration introduced by Lord Lugard was known as:",  
+    options: ["(A) Direct rule", "(B) Indirect rule", "(C) Military rule", "(D) Traditional rule"],  
+    answer: 1  
+  },
+    {
+      question: "Q32: Which part of Nigeria most effectively accepted indirect rule?",
+      options: ["(A) Western Nigeria","(B) Eastern Nigeria","(C) Northern Nigeria","(D) Lagos"],
+      answer: 2
+    },
+    {
+      question: "Q33: A major challenge to indirect rule in Eastern Nigeria was:",
+      options: ["(A) Existence of powerful emirs","(B) Lack of centralized authority","(C) Support for colonialism","(D) Too many Europeans"],
+      answer: 1
+    },
+    {
+      question: "Q34: Under colonial rule, the highest British official in Nigeria was the:",
+      options: ["(A) High Commissioner","(B) Governor-General","(C) Resident","(D) District Officer"],
+      answer: 1
+    },
+    {
+      question: "Q35: The British used traditional rulers in governance primarily to:",
+      options: ["(A) Educate the masses","(B) Train British administrators","(C) Reduce administrative costs","(D) Enforce independence"],
+      answer: 2
+    },
+    {
+      question: "Q36: Which of these was a feature of colonial rule in Nigeria?",
+      options: ["(A) Sovereign independence","(B) Exploitation of resources","(C) Equal political representation","(D) True federalism"],
+      answer: 1
+    },
+    {
+      question: "Q37: The first Nigerian constitution under colonial rule was the:",
+      options: ["(A) Clifford Constitution","(B) Richards Constitution","(C) Macpherson Constitution","(D) Lyttleton Constitution"],
+      answer: 0
+    },
+    {
+      question: "Q38: The Clifford Constitution was introduced in:",
+      options: ["(A) 1914","(B) 1922","(C) 1946","(D) 1951"],
+      answer: 1
+    },
+    {
+      question: "Q39: Which constitution introduced regionalism in Nigeria?",
+      options: ["(A) Clifford Constitution","(B) Richards Constitution","(C) Macpherson Constitution","(D) Lyttleton Constitution"],
+      answer: 1
+    },
+    {
+      question: "Q40: The Legislative Council introduced under colonial rule primarily served the:",
+      options: ["(A) Northern protectorate","(B) Entire country equally","(C) Colony and Protectorate of Southern Nigeria","(D) Traditional rulers only"],
+      answer: 2
+    },
+    {
+      question: "Q41: Who was the Governor-General that carried out the amalgamation of Northern and Southern Nigeria in 1914?",
+      options: ["(A) Lord Lugard","(B) Sir Arthur Richards","(C) Sir Hugh Clifford","(D) Harold Macmillan"],
+      answer: 0
+    },
+    {
+      question: "Q42: What was the main reason for the amalgamation of Nigeria in 1914?",
+      options: ["(A) To promote religious unity","(B) To improve local industries","(C) To reduce administrative cost and improve efficiency","(D) To introduce democracy"],
+      answer: 2
+    },
+    {
+      question: "Q43: What system of administration did Lord Lugard introduce in Nigeria?",
+      options: ["(A) Parliamentary system","(B) Indirect Rule","(C) Federal system","(D) Direct Rule"],
+      answer: 1
+    },
+    {
+      question: "Q44: Which of the following was the first political party in Nigeria?",
+      options: ["(A) Action Group (AG)","(B) Northern People's Congress (NPC)","(C) National Council of Nigeria and the Cameroons (NCNC)","(D) Nigerian National Democratic Party (NNDP)"],
+      answer: 3
+    },
+    {
+      question: "Q45: Who founded the Nigerian National Democratic Party (NNDP)?",
+      options: ["(A) Nnamdi Azikiwe","(B) Herbert Macaulay","(C) Obafemi Awolowo","(D) Ahmadu Bello"],
+      answer: 1
+    },
+    {
+      question: "Q46: In what year was the NNDP founded?",
+      options: ["(A) 1923","(B) 1944","(C) 1951","(D) 1960"],
+      answer: 0
+    },
+    {
+      question: "Q47: Which of these personalities was known as the 'Father of Nigerian Nationalism'?",
+      options: ["(A) Nnamdi Azikiwe","(B) Ahmadu Bello","(C) Herbert Macaulay","(D) Tafawa Balewa"],
+      answer: 2
+    },
+    {
+      question: "Q48: The Clifford Constitution of 1922 introduced what major political reform?",
+      options: ["(A) Federalism","(B) Adult suffrage","(C) Legislative Council with elected African representatives","(D) Self-government"],
+      answer: 2
+    },
+    {
+      question: "Q49: The Zikist Movement was associated with which Nigerian nationalist?",
+      options: ["(A) Herbert Macaulay","(B) Nnamdi Azikiwe","(C) Obafemi Awolowo","(D) Tafawa Balewa"],
+      answer: 1
+    },
+    {
+      question: "Q50: Which political party was founded by Obafemi Awolowo?",
+      options: ["(A) NCNC","(B) NPC","(C) AG","(D) NNDP"],
+      answer: 2
+    },
+    {
+      question: "Q51: Which Nigerian nationalist was also the editor of the West African Pilot?",
+      options: ["(A) Nnamdi Azikiwe","(B) Ahmadu Bello","(C) Anthony Enahoro","(D) Ernest Ikoli"],
+      answer: 0
+    },
+    {
+      question: "Q52: The NCNC was co-founded by Nnamdi Azikiwe and who else?",
+      options: ["(A) Obafemi Awolowo","(B) Tafawa Balewa","(C) Herbert Macaulay","(D) Ernest Ikoli"],
+      answer: 2
+    },
+    {
+      question: "Q53: When was Nigeria granted independence?",
+      options: ["(A) October 1, 1954","(B) October 1, 1960","(C) January 15, 1966","(D) May 29, 1999"],
+      answer: 1
+    },
+    {
+      question: "Q54: Who was the first Prime Minister of independent Nigeria?",
+      options: ["(A) Nnamdi Azikiwe","(B) Tafawa Balewa","(C) Obafemi Awolowo","(D) Ahmadu Bello"],
+      answer: 1
+    },
+    {
+      question: "Q55: Which constitution introduced a federal system of government in Nigeria?",
+      options: ["(A) Clifford Constitution","(B) Macpherson Constitution","(C) Lyttleton Constitution","(D) Richards Constitution"],
+      answer: 2
+    },
+    {
+      question: "Q56: Which of the following political parties was dominant in Northern Nigeria during the First Republic?",
+      options: ["(A) NCNC","(B) NPC","(C) AG","(D) NNDP"],
+      answer: 1
+    },
+    {
+      question: "Q57: The Richards Constitution of 1946 was important because it:",
+      options: ["(A) Introduced regional governments","(B) Granted Nigeria independence","(C) Introduced universal suffrage","(D) Abolished indirect rule"],
+      answer: 0
+    },
+    {
+      question: "Q58: Which of these nationalists moved the motion for Nigeria’s independence?",
+      options: ["(A) Obafemi Awolowo","(B) Nnamdi Azikiwe","(C) Herbert Macaulay","(D) Anthony Enahoro"],
+      answer: 3
+    },
+    {
+      question: "Q59: In which year was the Action Group (AG) formed?",
+      options: ["(A) 1944","(B) 1951","(C) 1959","(D) 1963"],
+      answer: 1
+    },
+    {
+      question: "Q60: Which of the following colonial policies united Nigeria under one administration?",
+      options: ["(A) Clifford Constitution","(B) Amalgamation of 1914","(C) Lyttleton Constitution","(D) Independence Constitution"],
+      answer: 1
+    },
+    {
+      question: "Q61: When did the first military coup in Nigeria take place?",
+      options: ["(A) 1960","(B) 1963","(C) 1966","(D) 1975"],
+      answer: 2
+    },
+    {
+    question: "Q62: Who was Nigeria’s first military Head of State?",
+    options: ["(A) Yakubu Gowon", "(B) Chukwumeka Ojukwu", "(C) Murtala Mohammed", "(D) Aguiyi Ironsi"],
+    answer: 3
+  },
+  {
+    question: "Q63: The 1966 coup was primarily led by which ethnic group?",
+    options: ["(A) Yoruba", "(B) Hausa", "(C) Igbo", "(D) Fulani"],
+    answer: 2
+  },
+  {
+    question: "Q64: Which of the following is a consequence of military rule in Nigeria?",
+    options: ["(A) Frequent elections", "(B) Stable democracy", "(C) Suppression of civil liberties", "(D) Independent judiciary"],
+    answer: 2
+  },
+  {
+    question: "Q65: Who succeeded General Aguiyi Ironsi after the July 1966 counter-coup?",
+    options: ["(A) Olusegun Obasanjo", "(B) Yakubu Gowon", "(C) Murtala Mohammed", "(D) Ibrahim Babangida"],
+    answer: 1
+  },
+  {
+    question: "Q66: Which military regime created the most states in Nigeria?",
+    options: ["(A) General Babangida", "(B) General Abacha", "(C) General Gowon", "(D) General Murtala Mohammed"],
+    answer: 2
+  },
+  {
+    question: "Q67: One major reason for military intervention in Nigerian politics was:",
+    options: ["(A) Academic excellence", "(B) Political instability and corruption", "(C) Religious tolerance", "(D) Economic prosperity"],
+    answer: 1
+  },
+  {
+    question: "Q68: What year did the military hand over power to a civilian government in Nigeria for the second time?",
+    options: ["(A) 1979", "(B) 1999", "(C) 1983", "(D) 1993"],
+    answer: 1
+  },
+  {
+    question: "Q69: Which of the following is NOT a feature of military government?",
+    options: ["(A) Decrees and edicts", "(B) Rule by force", "(C) Separation of powers", "(D) Suspension of the constitution"],
+    answer: 2
+  },
+  {
+    question: "Q70: Military rule in Nigeria encouraged:",
+    options: ["(A) Multiparty democracy", "(B) Federal character principle", "(C) Centralized decision-making", "(D) Transparency and accountability"],
+    answer: 2
+  },
+  {
+    question: "Q71: What was the main cause of the Nigerian Civil War?",
+    options: ["(A) Religious crisis", "(B) Secession of Biafra", "(C) Foreign invasion", "(D) Trade disputes"],
+    answer: 1
+  },
+  {
+    question: "Q72: Who was the leader of Biafra during the Nigerian Civil War?",
+    options: ["(A) Nnamdi Azikiwe", "(B) Emeka Anyaoku", "(C) Odumegwu Ojukwu", "(D) Chinua Achebe"],
+    answer: 2
+  },
+  {
+    question: "Q73: The Nigerian Civil War officially began in:",
+    options: ["(A) May 1966", "(B) July 1966", "(C) January 1967", "(D) July 1967"],
+    answer: 3
+  },
+  {
+    question: "Q74: Which slogan was used by the Nigerian government during the civil war?",
+    options: ["(A) “One Nigeria!”", "(B) “Unity is Strength”", "(C) “To keep Nigeria one is a task that must be done”", "(D) “Federalism forever”"],
+    answer: 2
+  },
+  {
+    question: "Q75: Which country supported Biafra during the civil war?",
+    options: ["(A) Ghana", "(B) United States", "(C) France", "(D) Soviet Union"],
+    answer: 2
+  },
+  {
+    question: "Q76: One major humanitarian crisis during the Nigerian Civil War was:",
+    options: ["(A) Flood disaster", "(B) Famine in Biafra", "(C) Earthquake in the East", "(D) Oil spillage"],
+    answer: 1
+  },
+  {
+    question: "Q77: The Nigerian Civil War ended in:",
+    options: ["(A) 1970", "(B) 1972", "(C) 1969", "(D) 1971"],
+    answer: 0
+  },
+  {
+    question: "Q78: The policy of “No victor, no vanquished” was declared by:",
+    options: ["(A) Olusegun Obasanjo", "(B) Yakubu Gowon", "(C) Murtala Mohammed", "(D) Benjamin Tenneson"],
+    answer: 1
+  },
+  {
+    question: "Q79: The immediate cause of the civil war was:",
+    options: ["(A) Creation of more states", "(B) Refusal to implement Aburi Accord", "(C) Religious violence", "(D) Boundary disputes"],
+    answer: 1
+  },
+  {
+    question: "Q80: A major impact of the Nigerian Civil War was:",
+    options: ["(A) Total disintegration of Nigeria", "(B) End of federalism", "(C) Massive loss of lives and property", "(D) Emergence of new political parties"],
+    answer: 2
+  },
+  {
+    question: "Q81: What is the primary feature of indigenous trade in Nigeria?",
+    options: ["(A) Dependence on online payment systems", "(B) Use of sophisticated retail chains", "(C) Use of traditional market days and barter system", "(D) Reliance on foreign exchange"],
+    answer: 2
+  },
+  {
+    question: "Q82: Which of the following best describes a traditional market in Nigeria?",
+    options: ["(A) Only operates during weekends", "(B) Operates using modern supermarkets", "(C) Is based on community gathering and periodic market days", "(D) Requires international trade licenses"],
+    answer: 2
+  },
+  {
+    question: "Q83: In the pre-colonial Nigerian market system, trade was mainly conducted through:",
+    options: ["(A) E-commerce platforms", "(B) Cryptocurrency", "(C) Barter and later cowries", "(D) Credit cards"],
+    answer: 2
+  },
+  {
+    question: "Q84: Which of these is a common indigenous unit of trade in traditional Nigerian markets?",
+    options: ["(A) Dollar", "(B) Cartons", "(C) Calabashes and baskets", "(D) Pounds"],
+    answer: 2
+  },
+  {
+    question: "Q85: One key role of traditional Nigerian markets is to:",
+    options: ["(A) Promote foreign investment", "(B) Serve as centers of cultural and social exchange", "(C) Ban rural development", "(D) Enforce tax"],
+    answer: 1
+  },
+  {
+    question: "Q86: Which ethnic group in Nigeria is especially known for its indigenous apprenticeship system?",
+    options: ["(A) Fulani", "(B) Yoruba", "(C) Igbo", "(D) Tiv"],
+    answer: 2
+  },
+  {
+    question: "Q87: The Igbo apprenticeship system is best described as a:",
+    options: ["(A) Formal university education system", "(B) System where youths are trained and later settled to start their own business", "(C) Government employment scheme", "(D) Pension plan"],
+    answer: 1
+  },
+  {
+    question: "Q88: What is the key benefit of the indigenous apprenticeship system?",
+    options: ["(A) It reduces family ties", "(B) It promotes idleness", "(C) It builds entrepreneurship and self-reliance", "(D) It discourages business growth"],
+    answer: 2
+  },
+  {
+    question: "Q89: In the indigenous apprenticeship system, 'settlement' means:",
+    options: ["(A) Sending the apprentice to jail", "(B) Terminating the apprenticeship with punishment", "(C) Giving the apprentice money or goods to start a business", "(D) Returning the apprentice to the village"],
+    answer: 2
+  },
+  {
+    question: "Q90: Which of the following is NOT a characteristic of the indigenous apprenticeship system?",
+    options: ["(A) Knowledge transfer", "(B) Skills acquisition", "(C) Free distribution of goods", "(D) Mentorship"],
+    answer: 2
+  },
+  {
+    question: "Q91: Skill acquisition is important in trade because it:",
+    options: ["(A) Reduces productivity", "(B) Promotes laziness", "(C) Equips individuals to be self-reliant", "(D) Deters economic development"],
+    answer: 2
+  },
+  {
+    question: "Q92: Which of the following best defines self-reliance?",
+    options: ["(A) Ability to depend on foreign goods", "(B) Ability to live without producing anything", "(C) Ability to meet one's needs through personal effort and local resources", "(D) Dependence on government aid"],
+    answer: 2
+  },
+  {
+    question: "Q93: An example of a self-reliant activity in Nigeria is:",
+    options: ["(A) Importing all food items", "(B) Learning tailoring and opening a fashion shop", "(C) Depending on monthly allowance", "(D) Waiting for foreign investors"],
+    answer: 1
+  },
+  {
+    question: "Q94: Which sector mostly benefits from indigenous skill acquisition programs?",
+    options: ["(A) Oil and gas", "(B) Fashion and crafts", "(C) International banking", "(D) Importation services"],
+    answer: 1
+  },
+  {
+    question: "Q95: The relationship between trade and self-reliance is that trade:",
+    options: ["(A) Makes people dependent on others", "(B) Encourages waste", "(C) Provides a platform for people to exchange goods and services for livelihood", "(D) Weakens local production"],
+    answer: 2
+  },
+  {
+    question: "Q96: The use of local materials and human resources for development defines:",
+    options: ["(A) Importation", "(B) Indigenous production", "(C) Globalization", "(D) Digital marketing"],
+    answer: 1
+  },
+  {
+    question: "Q97: One way to promote indigenous trade is to:",
+    options: ["(A) Rely only on imported goods", "(B) Devalue the local currency", "(C) Support local producers and craftspeople", "(D) Ban local markets"],
+    answer: 2
+  },
+  {
+    question: "Q98: Which of the following discourages self-reliance in a society?",
+    options: ["(A) Entrepreneurship education", "(B) High dependence on imported goods", "(C) Vocational training", "(D) Local content development"],
+    answer: 1
+  },
+  {
+    question: "Q99: Vocational and technical education promotes self-reliance by:",
+    options: ["(A) Making students dependent on others", "(B) Providing practical skills for employment or business", "(C) Focusing only on theory", "(D) Discouraging creativity"],
+    answer: 1
+  },
+  {
+    question: "Q100: 'Igba Boi' also called 'Imu Ahia' is a unique indigenous entrepreneurship model of ___ tribe in Nigeria",
+    options: ["(A) Igbo", "(B) Abakaliki Imu Ahia", "(C) Anambra Igba Boi", "(D) Ohafia Imu Ahia"],
+    answer: 0
+  },
+  {
+    question: "Q101: What does social justice primarily aim to promote in a society?",
+    options: ["(A) Personal wealth", "(B) Equality and fairness", "(C) Political rivalry", "(D) Cultural dominance"],
+    answer: 1
+  },
+  {
+    question: "Q102: Which of the following best describes social justice?",
+    options: ["(A) The enforcement of religious law", "(B) Equal distribution of wealth and opportunities", "(C) Political manipulation of resources", "(D) Suppression of minority voices"],
+    answer: 1
+  },
+  {
+    question: "Q103: One major objective of national development is:",
+    options: ["(A) Economic monopoly", "(B) Social discrimination", "(C) Improved standard of living", "(D) Tribal favoritism"],
+    answer: 2
+  },
+  {
+    question: "Q104: Social justice contributes to national development by:",
+    options: ["(A) Dividing society by class", "(B) Encouraging inequality", "(C) Promoting unity and stability", "(D) Limiting civil rights"],
+    answer: 2
+  },
+  {
+    question: "Q105: Which institution is responsible for ensuring social justice in Nigeria?",
+    options: ["(A) Political parties", "(B) The judiciary", "(C) The press", "(D) Multinational companies"],
+    answer: 1
+  },
+  {
+    question: "Q106: Which of the following is not a principle of social justice?",
+    options: ["(A) Equity", "(B) Human rights", "(C) Discrimination", "(D) Participation"],
+    answer: 2
+  },
+  {
+    question: "Q107: A key indicator of national development is:",
+    options: ["(A) Increased population", "(B) High illiteracy rate", "(C) Technological advancement", "(D) Political unrest"],
+    answer: 2
+  },
+  {
+    question: "Q108: Which sector plays the most critical role in achieving national development?",
+    options: ["(A) The entertainment sector", "(B) The informal sector", "(C) The education sector", "(D) The criminal sector"],
+    answer: 2
+  },
+  {
+    question: "Q109: Social justice ensures that every individual:",
+    options: ["(A) Gets rich", "(B) Is treated fairly regardless of background", "(C) Rules the nation", "(D) Gains immunity from the law"],
+    answer: 1
+  },
+  {
+    question: "Q110: Which of these promotes national development through fairness in resource allocation?",
+    options: ["(A) Nepotism", "(B) Meritocracy", "(C) Ethnocentrism", "(D) Favoritism"],
+    answer: 1
+  },
+  {
+    question: "Q111: What is the best definition of law?",
+    options: ["(A) Rules made by individuals", "(B) The customs of a community", "(C) A set of rules enforceable by courts", "(D) Religious beliefs of a people"],
+    answer: 2
+  },
+  {
+    question: "Q112: Which of the following is a characteristic of law?",
+    options: ["(A) Optional compliance", "(B) Arbitrary judgment", "(C) Enforceability", "(D) Religious origin"],
+    answer: 2
+  },
+  {
+    question: "Q113: Public law governs the relationship between:",
+    options: ["(A) Private individuals", "(B) Citizens and their families", "(C) Individuals and the state", "(D) Political parties"],
+    answer: 2
+  },
+  {
+    question: "Q114: An example of criminal law is:",
+    options: ["(A) Divorce proceedings", "(B) Will and inheritance", "(C) Theft and assault", "(D) Property dispute"],
+    answer: 2
+  },
+  {
+    question: "Q115: Civil law deals with:",
+    options: ["(A) Military operations", "(B) Crimes and punishment", "(C) Disputes between individuals", "(D) Government elections"],
+    answer: 2
+  },
+  {
+    question: "Q116: The law that deals with the organization of government and its functions is:",
+    options: ["(A) Customary law", "(B) Constitutional law", "(C) Tort law", "(D) Criminal law"],
+    answer: 1
+  },
+  {
+    question: "Q117: Customary law is derived from:",
+    options: ["(A) The constitution", "(B) The president", "(C) Local traditions and customs", "(D) International treaties"],
+    answer: 2
+  },
+  {
+    question: "Q118: Which of the following is a source of Nigerian law?",
+    options: ["(A) The media", "(B) Public opinion", "(C) Judicial precedent", "(D) Religious belief alone"],
+    answer: 2
+  },
+  {
+    question: "Q119: Law can be classified into how many broad categories?",
+    options: ["(A) One", "(B) Two", "(C) Three", "(D) Five"],
+    answer: 1
+  },
+  {
+    question: "Q120: The primary aim of law in any society is to:",
+    options: ["(A) Promote dictatorship", "(B) Maintain order and justice", "(C) Encourage disobedience", "(D) Empower criminals"],
+    answer: 1
+  },
+  {
+    question: "Q121: Which arm of government is responsible for interpreting the law?",
+    options: ["(A) Executive", "(B) Legislature", "(C) Judiciary", "(D) Police"],
+    answer: 2
+  },
+  {
+    question: "Q122: The fundamental human rights of citizens are enshrined in the:",
+    options: ["(A) Criminal Code", "(B) Constitution", "(C) National Assembly Rules", "(D) Penal Code"],
+    answer: 1
+  },
+  {
+    question: "Q123: The highest court in Nigeria is the:",
+    options: ["(A) Federal High Court", "(B) Court of Appeal", "(C) Supreme Court", "(D) National Industrial Court"],
+    answer: 2
+  },
+  {
+    question: "Q124: The right to fair hearing is an example of:",
+    options: ["(A) Political right", "(B) Economic right", "(C) Civil right", "(D) Social right"],
+    answer: 2
+  },
+  {
+    question: "Q125: Which of the following rights allows a person to express opinions freely?",
+    options: ["(A) Right to life", "(B) Right to fair hearing", "(C) Right to freedom of expression", "(D) Right to property"],
+    answer: 2
+  },
+  {
+    question: "Q126: The judiciary acts as a check on the:",
+    options: ["(A) Executive and legislature", "(B) Police and civil service", "(C) Local and state governments", "(D) Traditional rulers"],
+    answer: 0
+  },
+  {
+    question: "Q127: Which court in Nigeria handles disputes relating to the constitution?",
+    options: ["(A) Magistrate Court", "(B) Customary Court", "(C) Sharia Court", "(D) Supreme Court"],
+    answer: 3
+  },
+  {
+    question: "Q128: Fundamental human rights are enforceable by:",
+    options: ["(A) Local government", "(B) Customary court", "(C) Court of law", "(D) Traditional institutions"],
+    answer: 2
+  },
+  {
+    question: "Q129: The right to vote and be voted for is a:",
+    options: ["(A) Civil right", "(B) Political right", "(C) Legal right", "(D) Economic right"],
+    answer: 1
+  },
+  {
+    question: "Q130: Judicial independence means the judiciary is:",
+    options: ["(A) Controlled by the executive", "(B) Influenced by the legislature", "(C) Free from external interference", "(D) Controlled by the police"],
+    answer: 2
+  },
+  {
+    question: "Q131: The principle of rule of law ensures that:",
+    options: ["(A) Citizens are above the law", "(B) Leaders cannot be prosecuted", "(C) All citizens are equal before the law", "(D) Only the rich obey the law"],
+    answer: 2
+  },
+  {
+    question: "Q132: The fundamental human right to own property is known as:",
+    options: ["(A) Economic right", "(B) Social right", "(C) Cultural right", "(D) Religious right"],
+    answer: 0
+  },
+  {
+    question: "Q133: The right to practice any religion is called:",
+    options: ["(A) Freedom of movement", "(B) Freedom of religion", "(C) Freedom of association", "(D) Freedom of expression"],
+    answer: 1
+  },
+  {
+    question: "Q134: Which of these rights is not a fundamental human right?",
+    options: ["(A) Right to education", "(B) Right to vote", "(C) Right to cheat in exams", "(D) Right to life"],
+    answer: 2
+  },
+  {
+    question: "Q135: The doctrine of separation of powers ensures that:",
+    options: ["(A) One arm dominates others", "(B) All powers are given to the executive", "(C) Powers are shared among the three arms", "(D) Legislature controls the judiciary"],
+    answer: 2
+  },
+  {
+    question: "Q136: The judiciary helps to protect the rights of citizens by:",
+    options: ["(A) Making laws", "(B) Judging cases fairly", "(C) Electing leaders", "(D) Conducting elections"],
+    answer: 1
+  },
+  {
+    question: "Q137: The power of the judiciary to declare laws unconstitutional is called:",
+    options: ["(A) Judicial activism", "(B) Judicial declaration", "(C) Judicial supremacy"],
+    answer: 0
+  },
+  {
+    question: "Q140: Which of these is a function of the judiciary?",
+    options: ["(A) Conducting elections", "(B) Interpreting laws", "(C) Making budgets", "(D) Enforcing traffic rules"],
+    answer: 1
+  },
+  {
+    question: "Q141: Which of the following is a core Nigerian value?",
+    options: ["(A) Selfishness", "(B) Corruption", "(C) Integrity", "(D) Disobedience"],
+    answer: 2
+  },
+  {
+    question: "Q142: Respect for elders in Nigeria is an example of:",
+    options: ["(A) Legal law", "(B) Cultural norm", "(C) National policy", "(D) Economic rule"],
+    answer: 1
+  },
+  {
+    question: "Q143: The Nigerian society encourages all EXCEPT:",
+    options: ["(A) Honesty", "(B) Hard work", "(C) Laziness", "(D) Patriotism"],
+    answer: 2
+  },
+  {
+    question: "Q144: A shared system of beliefs and behaviors within a society is known as:",
+    options: ["(A) Religion", "(B) Politics", "(C) Norms", "(D) Value system"],
+    answer: 3
+  },
+  {
+    question: "Q145: Which of these is NOT a Nigerian traditional value?",
+    options: ["(A) Hospitality", "(B) Unity", "(C) Individualism", "(D) Respect"],
+    answer: 2
+  },
+  {
+    question: "Q146: A person born in Nigeria to Nigerian parents is a citizen by:",
+    options: ["(A) Registration", "(B) Birth", "(C) Naturalization", "(D) Indigenization"],
+    answer: 1
+  },
+  {
+    question: "Q147: Which of these is NOT a mode of acquiring Nigerian citizenship?",
+    options: ["(A) Birth", "(B) Marriage", "(C) Registration", "(D) Naturalization"],
+    answer: 1
+  },
+  {
+    question: "Q148: Citizenship by naturalization in Nigeria requires the applicant to have lived in Nigeria for at least:",
+    options: ["(A) 10 years", "(B) 20 years", "(C) 5 years", "(D) 15 years"],
+    answer: 0
+  },
+  {
+    question: "Q149: Foreigners can become citizens of Nigeria through:",
+    options: ["(A) Deportation", "(B) Registration", "(C) Birth", "(D) Temporary residency"],
+    answer: 1
+  },
+  {
+    question: "Q150: A person married to a Nigerian person is a citizen by:",
+    options: ["(A) Marriage", "(B) Law", "(C) Birth", "(D) Registration"],
+    answer: 3
+  },
+  {
+    question: "Q151: Which of these is a civic responsibility of a Nigerian citizen?",
+    options: ["(A) Paying taxes", "(B) Joining the army", "(C) Marrying early", "(D) Traveling abroad"],
+    answer: 0
+  },
+  {
+    question: "Q152: The duty of obeying laws in a country is known as:",
+    options: ["(A) Cultural behavior", "(B) Civic responsibility", "(C) Religious act", "(D) Political will"],
+    answer: 1
+  },
+  {
+    question: "Q153: Which of the following is NOT a right of a Nigerian citizen?",
+    options: ["(A) Freedom of speech", "(B) Right to vote", "(C) Right to traffic violation", "(D) Right to life"],
+    answer: 2
+  },
+  {
+    question: "Q154: Participation in democratic governance is a:",
+    options: ["(A) Traditional law", "(B) Civic duty", "(C) Religious law", "(D) Political right"],
+    answer: 1
+  },
+  {
+    question: "Q155: A responsible citizen should do all the following EXCEPT:",
+    options: ["(A) Pay tax", "(B) Obey laws", "(C) Promote violence", "(D) Defend the nation"],
+    answer: 2
+  },
+  {
+    question: "Q156: The promotion of indigenous languages in Nigeria is important because:",
+    options: ["(A) It discourages Western culture", "(B) It leads to disunity", "(C) It preserves culture and identity", "(D) It prevents migration"],
+    answer: 2
+  },
+  {
+    question: "Q157: Which of these is a major indigenous language in Nigeria?",
+    options: ["(A) Swahili", "(B) Zulu", "(C) Yoruba", "(D) Arabic"],
+    answer: 2
+  },
+  {
+    question: "Q158: The use of local languages in education encourages:",
+    options: ["(A) Corruption", "(B) Cultural erosion", "(C) Better understanding", "(D) Political domination"],
+    answer: 2
+  },
+  {
+    question: "Q159: Which of these is considered a negative social behavior in Nigeria?",
+    options: ["(A) Punctuality", "(B) Cultism", "(C) Patriotism", "(D) Respect"],
+    answer: 1
+  },
+  {
+    question: "Q160: The act of taking what does not belong to you is:",
+    options: ["(A) Honesty", "(B) Corruption", "(C) Forgiveness", "(D) Empathy"],
+    answer: 1
+  },
+  {
+    question: "Q161: Which of the following best defines cultism?",
+    options: ["(A) An open group formed for social purposes", "(B) A secret society with hidden rituals and oaths", "(C) A religious organization", "(D) A government-sponsored club"],
+    answer: 1
+  },
+  {
+    question: "Q162: The main aim of campus cult groups is to:",
+    options: ["(A) Organize school debates", "(B) Promote good morals", "(C) Intimidate and manipulate others", "(D) Help school authorities"],
+    answer: 2
+  },
+  {
+    question: "Q163: Which of these is a common symbol of cult groups?",
+    options: ["(A) Books", "(B) Peace signs", "(C) Weapons", "(D) School uniforms"],
+    answer: 2
+  },
+  {
+    question: "Q164: One of the main reasons students join cult groups is:",
+    options: ["(A) Academic excellence", "(B) Parental pressure", "(C) To be feared and respected", "(D) To receive advice by the community"],
+    answer: 2
+  },
+  {
+    question: "Q165: A major consequence of cultism in schools is:",
+    options: ["(A) Improved academic performance", "(B) Increase in crime and violence", "(C) Better discipline", "(D) Enhanced student unity"],
+    answer: 1
+  },
+  {
+    question: "Q166: Kidnapping can best be described as:",
+    options: ["(A) Giving someone a lift", "(B) Holding someone against their will for ransom or other gains", "(C) Helping someone cross the road", "(D) Arresting a criminal"],
+    answer: 1
+  },
+  {
+    question: "Q167: A major motive for kidnapping is:",
+    options: ["(A) Charity", "(B) Entertainment", "(C) Ransom or revenge", "(D) Worship"],
+    answer: 2
+  },
+  {
+    question: "Q168: Which of the following groups is most affected by kidnapping in Nigeria?",
+    options: ["(A) Farmers only", "(B) Only school children", "(C) All categories of people", "(D) Only politicians"],
+    answer: 2
+  },
+  {
+    question: "Q169: One way to reduce kidnapping is through:",
+    options: ["(A) Building more shopping malls", "(B) Increasing police presence and intelligence", "(C) Creating more cult groups", "(D) Ignoring the problem"],
+    answer: 1
+  },
+  {
+    question: "Q170: The unlawful taking of someone for personal gain is called:",
+    options: ["(A) Assassination", "(B) Robbery", "(C) Kidnapping", "(D) Pilgrimage"],
+    answer: 2
+  },
+  {
+    question: "Q178: Peer pressure often leads young people into:",
+    options: ["(A) Self-development", "(B) Negative behavior and bad habits", "(C) Job opportunities", "(D) Public speaking"],
+    answer: 1
+  },
+  {
+    question: "Q179: A preventive measure against social vices in schools is:",
+    options: ["(A) Promoting cultism", "(B) Encouraging poor parenting", "(C) Moral and civic education", "(D) Reducing school fees"],
+    answer: 2
+  },
+  {
+    question: "Q180: A person who lures and abuses children is best described as a:",
+    options: ["(A) Teacher", "(B) Pedestrian", "(C) Kidnapper", "(D) Barber"],
+    answer: 2
+  },
+  {
+    question: "Q181: What do the 3Rs in post-civil war Nigeria stand for?",
+    options: ["(A) Reconciliation, Revolution, Reformation", "(B) Reconstruction, Rehabilitation, Re-orientation", "(C) Redemption, Repatriation, Reconciliation", "(D) Regulation, Renewal, Rebuilding"],
+    answer: 1
+  },
+  {
+    question: "Q182: The aim of Reconstruction in the 3Rs policy was to:",
+    options: ["(A) Create a new constitution", "(B) Rebuild war-ravaged areas and infrastructure", "(C) Punish the rebels", "(D) Reorganize political parties"],
+    answer: 1
+  },
+  {
+    question: "Q183: Re-orientation as part of the 3Rs refers to:",
+    options: ["(A) Changing the geographical orientation of the nation", "(B) Re-educating citizens to accept national unity and moral values", "(C) Redirecting trade routes", "(D) Rewriting the constitution"],
+    answer: 1
+  },
+  {
+    question: "Q184: Which of the following best describes moral values?",
+    options: ["(A) Beliefs about what is right and wrong behavior", "(B) Rules enforced by the police", "(C) Religious doctrines only", "(D) Laws made by government"],
+    answer: 0
+  },
+  {
+    question: "Q185: National values are important because they:",
+    options: ["(A) Promote selfishness and tribalism", "(B) Encourage military rule", "(C) Guide citizens toward responsible and patriotic behavior", "(D) Diminish national pride"],
+    answer: 2
+  },
+  {
+    question: "Q186: One of the key goals of rehabilitation under the 3Rs was to:",
+    options: ["(A) Deport ex-soldiers", "(B) Integrate former soldiers and displaced persons into society", "(C) Establish foreign embassies", "(D) Remove traditional institutions"],
+    answer: 1
+  },
+  {
+    question: "Q187: A major focus of the Re-orientation policy was to:",
+    options: ["(A) Promote political apathy", "(B) Instill discipline, patriotism, and national loyalty", "(C) Support tribal dominance", "(D) Disband national organizations"],
+    answer: 1
+  },
+  {
+    question: "Q188: National symbols help promote:",
+    options: ["(A) Religious differences", "(B) Ethnic supremacy", "(C) National unity and pride", "(D) Corruption and nepotism"],
+    answer: 2
+  },
+  {
+    question: "Q189: Which of the following is NOT a moral value?",
+    options: ["(A) Honesty", "(B) Tolerance", "(C) Bribery", "(D) Responsibility"],
+    answer: 2
+  },
+  {
+    question: "Q190: Which body plays a key role in promoting national orientation in Nigeria today?",
+    options: ["(A) Nigerian Broadcasting Commission (NBC)", "(B) National Orientation Agency (NOA)", "(C) National Population Commission (NPC)", "(D) Nigerian Stock Exchange"],
+    answer: 1
+  },
+  {
+    question: "Q191: The 3Rs policy was introduced in Nigeria after the:",
+    options: ["(A) First Republic", "(B) Civil War (1967–1970)", "(C) Independence in 1960", "(D) 1999 Constitution"],
+    answer: 1
+  },
+  {
+    question: "Q192: One way to promote national values in schools is through:",
+    options: ["(A) Cultural discrimination", "(B) Teaching Civic Education", "(C) Political campaigns", "(D) Unethical practices"],
+    answer: 1
+  },
+  {
+    question: "Q193: Which of these is a consequence of lack of moral values in society?",
+    options: ["(A) National integration", "(B) Peaceful coexistence", "(C) Corruption and social decay", "(D) Economic growth"],
+    answer: 2
+  },
+  {
+    question: "Q194: Which of the following best defines patriotism?",
+    options: ["(A) Loyalty to one’s country", "(B) Love and devotion to one’s country", "(C) Obeying only family traditions", "(D) Respecting foreign policies"],
+    answer: 1
+  },
+  {
+    question: "Q195: A core objective of national re-orientation is to:",
+    options: ["(A) Emphasize regionalism", "(B) Promote unity and ethical behavior", "(C) Reduce government spending", "(D) Encourage foreign religion"],
+    answer: 1
+  },
+  {
+    question: "Q196: Which of these is a national value?",
+    options: ["(A) Tribalism", "(B) Disrespect", "(C) Integrity", "(D) Nepotism"],
+    answer: 2
+  },
+  {
+    question: "Q197: Which national symbol represents the authority of the President in Nigeria?",
+    options: ["(A) Coat of Arms", "(B) National Flag", "(C) The Mace", "(D) The National Anthem"],
+    answer: 0
+  },
+  {
+    question: "Q198: Teaching of moral and civic values can help curb:",
+    options: ["(A) Academic excellence", "(B) Political participation", "(C) Electoral violence and social vices", "(D) National unity"],
+    answer: 2
+  },
+  {
+    question: "Q199: Who introduced the 3Rs policy in Nigeria?",
+    options: ["(A) Yakubu Gowon", "(B) Nnamdi Azikiwe", "(C) Olusegun Obasanjo", "(D) Muhammadu Buhari"],
+    answer: 0
+  },
+  {
+    question: "Q200: A society with strong moral values will likely experience:",
+    options: ["(A) Violence and instability", "(B) Peace, development, and good governance", "(C) Tribal conflict", "(D) Economic backwardness"],
+    answer: 1
+  },
+  {
+    question: "Q201: What was the primary aim of Operation Feed the Nation (OFN)?",
+    options: ["(A) Promote industrialization", "(B) Reduce unemployment", "(C) Boost agricultural production and self-sufficiency", "(D) Improve foreign relations"],
+    answer: 2
+  },
+  {
+    question: "Q202: In what year was Operation Feed the Nation launched in Nigeria?",
+    options: ["(A) 1970", "(B) 1976", "(C) 1980", "(D) 1985"],
+    answer: 1
+  },
+  {
+    question: "Q203: Which Nigerian Head of State initiated Operation Feed the Nation?",
+    options: ["(A) General Yakubu Gowon", "(B) General Ibrahim Babangida", "(C) General Olusegun Obasanjo", "(D) General Murtala Mohammed"],
+    answer: 2
+  },
+  {
+    question: "Q204: Operation Feed the Nation was primarily targeted at which sector?",
+    options: ["(A) Oil and gas", "(B) Manufacturing", "(C) Agriculture", "(D) Education"],
+    answer: 2
+  },
+  {
+    question: "Q205: Which group was NOT directly targeted by the OFN programme?",
+    options: ["(A) Students", "(B) Civil servants", "(C) Farmers", "(D) Foreign investors"],
+    answer: 3
+  },
+  {
+    question: "Q206: One major strategy of OFN was to encourage the participation of:",
+    options: ["(A) Only commercial farmers", "(B) All Nigerians including urban dwellers", "(C) Politicians and businessmen", "(D) International donors"],
+    answer: 1
+  },
+  {
+    question: "Q207: What was a major limitation of Operation Feed the Nation?",
+    options: ["(A) It discouraged foreign investment", "(B) It lacked government support", "(C) Poor implementation and lack of continuity", "(D) It led to food surpluses"],
+    answer: 2
+  },
+  {
+    question: "Q208: Operation Feed the Nation was later replaced by which programme?",
+    options: ["(A) Green Revolution", "(B) National Economic Empowerment", "(C) Better Life for Rural Women", "(D) Structural Adjustment Programme"],
+    answer: 0
+  },
+  {
+    question: "Q209: Which of the following best describes the outcome of OFN?",
+    options: ["(A) It made Nigeria a net exporter of food", "(B) It had limited success and did not meet its goals", "(C) It permanently solved Nigeria’s food crisis", "(D) It was rejected by farmers"],
+    answer: 1
+  },
+  {
+    question: "Q210: A key feature of OFN was:",
+    options: ["(A) Distribution of tractors and fertilizers", "(B) Privatization of farmlands", "(C) Total ban on food imports", "(D) Abolishment of traditional farming methods"],
+    answer: 0
+  },
+  {
+    question: "Q211: What was the primary objective of the Green Revolution in Nigeria?",
+    options: ["(A) Promote foreign investment", "(B) Increase agricultural productivity", "(C) Expand industrialization", "(D) Encourage urban migration"],
+    answer: 1
+  },
+  {
+    question: "Q212: The Green Revolution in Nigeria was most active during which decade?",
+    options: ["(A) 1950s", "(B) 1960s", "(C) 1970s", "(D) 1990s"],
+    answer: 2
+  },
+  {
+    question: "Q213: Which Nigerian Head of State was instrumental in initiating the Green Revolution policy?",
+    options: ["(A) Olusegun Obasanjo", "(B) Yakubu Gowon", "(C) Muhammadu Buhari", "(D) Shehu Shagari"],
+    answer: 3
+  },
+  {
+    question: "Q214: Which of the following was NOT a goal of the Green Revolution in Nigeria?",
+    options: ["(A) Achieve food self-sufficiency", "(B) Reduce agricultural imports", "(C) Improve rural livelihoods", "(D) Increase petroleum exports"],
+    answer: 3
+  },
+  {
+    question: "Q215: The Green Revolution emphasized the use of which of the following in agriculture?",
+    options: ["(A) Organic fertilizers only", "(B) Traditional tools", "(C) Improved seeds and fertilizers", "(D) Manual labor only"],
+    answer: 2
+  },
+  {
+    question: "Q216: Which of these was a major limitation of the Green Revolution in Nigeria?",
+    options: ["(A) Over-industrialization", "(B) Poor road networks", "(C) Excessive rainfall", "(D) Dependence on oil"],
+    answer: 1
+  },
+  {
+    question: "Q217: Which organization played a significant role in the implementation of agricultural projects during the Green Revolution in Nigeria?",
+    options: ["(A) NNPC", "(B) NAFDAC", "(C) River Basin Development Authorities", "(D) EFCC"],
+    answer: 2
+  },
+  {
+    question: "Q218: One of the criticisms of the Green Revolution in Nigeria was that it primarily benefited:",
+    options: ["(A) Urban poor", "(B) Oil companies", "(C) Large-scale farmers", "(D) Local artisans"],
+    answer: 2
+  },
+  {
+    question: "Q219: Which of the following crops benefited most from the Green Revolution in Nigeria?",
+    options: ["(A) Cocoa", "(B) Millet", "(C) Rice and maize", "(D) Cotton"],
+    answer: 2
+  },
+  {
+    question: "Q220: The failure of the Green Revolution in Nigeria has been linked to:",
+    options: ["(A) Excessive mechanization", "(B) Poor agricultural extension services", "(C) Increase in oil revenue", "(D) Ban on fertilizer use"],
+    answer: 1
+  },
+  {
+    question: "Q221: What are austerity measures?",
+    options: ["(A) Government actions to increase public sector jobs", "(B) Government actions to reduce spending and manage debt", "(C) Government efforts to boost agriculture", "(D) Strategies to encourage consumer spending"],
+    answer: 1
+  },
+  {
+    question: "Q222: A major reason for implementing austerity measures in Nigeria during the 1980s was:",
+    options: ["(A) Increase in oil prices", "(B) Excessive foreign exchange reserves", "(C) Economic recession and falling oil revenues", "(D) High level of industrialization"],
+    answer: 2
+  },
+  {
+    question: "Q223: Which Nigerian administration introduced the Structural Adjustment Programme (SAP) that included austerity measures?",
+    options: ["(A) Olusegun Obasanjo (1999–2007)", "(B) Muhammadu Buhari (2015–2023)", "(C) Ibrahim Babangida (1985–1993)", "(D) Goodluck Jonathan (2010–2015)"],
+    answer: 2
+  },
+  {
+    question: "Q224: Austerity measures often involve the following, except:",
+    options: ["(A) Reduction in public sector salaries", "(B) Subsidy removal", "(C) Increase in government spending", "(D) Currency devaluation"],
+    answer: 2
+  },
+  {
+    question: "Q225: One of the major impacts of austerity measures on ordinary Nigerians is:",
+    options: ["(A) Lower cost of living", "(B) Improved access to healthcare", "(C) Higher unemployment and inflation", "(D) Free education at all levels"],
+    answer: 2
+  },
+  {
+    question: "Q226: Which of the following sectors is usually most affected by austerity measures?",
+    options: ["(A) Oil and gas", "(B) Public service", "(C) Entertainment industry", "(D) Manufacturing"],
+    answer: 1
+  },
+  {
+    question: "Q227: Which international organization often supports countries like Nigeria in implementing austerity-related reforms?",
+    options: ["(A) African Union", "(B) United Nations", "(C) World Health Organization (WHO)", "(D) International Monetary Fund (IMF)"],
+    answer: 3
+  },
+  {
+    question: "Q228: A common criticism of austerity measures in Nigeria is that they:",
+    options: ["(A) Lead to rapid economic growth", "(B) Increase foreign reserves", "(C) Deepen poverty and inequality", "(D) Strengthen the naira"],
+    answer: 2
+  },
+  {
+    question: "Q229: The removal of fuel subsidy in Nigeria is an example of:",
+    options: ["(A) Economic liberalization", "(B) Austerity measure", "(C) Nationalization", "(D) Fiscal expansion"],
+    answer: 1
+  },
+  {
+    question: "Q230: The main goal of austerity measures is to:",
+    options: ["(A) Expand the size of government", "(B) Reduce inflation by printing more money", "(C) Cut government debt and restore economic stability", "(D) Increase minimum wage"],
+    answer: 2
+  },
+  {
+    question: "Q231: Who introduced the War Against Indiscipline (WAI) in Nigeria?",
+    options: ["(A) General Yakubu Gowon", "(B) General Olusegun Obasanjo", "(C) Major General Muhammadu Buhari", "(D) General Ibrahim Babangida"],
+    answer: 2
+  },
+  {
+    question: "Q232: In which year was the War Against Indiscipline (WAI) launched?",
+    options: ["(A) 1976", "(B) 1983", "(C) 1984", "(D) 1985"],
+    answer: 2
+  },
+  {
+    question: "Q233: The War Against Indiscipline was primarily aimed at combating:",
+    options: ["(A) Armed robbery", "(B) Illiteracy", "(C) Corruption and social disorder", "(D) Electoral malpractice"],
+    answer: 2
+  },
+  {
+    question: "Q234: Which of the following was not one of the focuses of WAI?",
+    options: ["(A) Environmental sanitation", "(B) Queue culture", "(C) Free education", "(D) Nationalism and patriotism"],
+    answer: 2
+  },
+  {
+    question: "Q235: The War Against Indiscipline (WAI) campaign was a brainchild of the:",
+    options: ["(A) The Nigerian Senate", "(B) The Supreme Military Council", "(C) The Nigerian Labour Congress", "(D) The National Assembly"],
+    answer: 1
+  },
+  {
+    question: "Q236: One of the key problems promoted by WAI was:",
+    options: ["(A) Skipping queues", "(B) Bribery and Corruption", "(C) Orderliness in public conduct", "(D) Indecent dressing"],
+    answer: 1
+  },
+  {
+    question: "Q237: How many phases did the original WAI program have?",
+    options: ["(A) 2", "(B) 5", "(C) 6", "(D) 4"],
+    answer: 1
+  },
+  {
+    question: "Q238: Which military leader succeeded General Buhari and scrapped the WAI program?",
+    options: ["(A) General Sani Abacha", "(B) General Ibrahim Babangida", "(C) General Abdulsalami Abubakar", "(D) General Yakubu Gowon"],
+    answer: 1
+  },
+  {
+    question: "Q239: The War Against Indiscipline helped to instill:",
+    options: ["(A) Military dictatorship", "(B) Democratic rule", "(C) Civic responsibility and discipline", "(D) Political opposition"],
+    answer: 2
+  },
+  {
+    question: "Q240: Which government agency revived WAI as “WAI Brigade”?",
+    options: ["(A) National Youth Service Corps (NYSC)", "(B) Nigerian Army", "(C) Federal Road Safety Corps", "(D) National Orientation Agency (NOA)"],
+    answer: 3
+  },
+  {
+    question: "Q241: What does WAIC stand for in Nigeria?",
+    options: ["(A) West African Investment Corporation", "(B) War Against Indiscipline and Corruption", "(C) Workers Association in Industry and Commerce", "(D) War Against Internal Conflict"],
+    answer: 1
+  },
+  {
+    question: "Q242: The War Against Indiscipline (WAI) was first launched during the regime of which Nigerian leader?",
+    options: ["(A) Olusegun Obasanjo", "(B) Ibrahim Babangida", "(C) Muhammadu Buhari", "(D) Sani Abacha"],
+    answer: 2
+  },
+  {
+    question: "Q243: In which year was the original War Against Indiscipline (WAI) introduced?",
+    options: ["(A) 1983", "(B) 1984", "(C) 1985", "(D) 1986"],
+    answer: 1
+  },
+  {
+    question: "Q244: The War Against Indiscipline and Corruption (WAIC) was later introduced under which Nigerian president?",
+    options: ["(A) Goodluck Jonathan", "(B) Umaru Musa Yar’Adua", "(C) Muhammadu Buhari (Second Term)", "(D) Olusegun Obasanjo"],
+    answer: 3
+  },
+  {
+    question: "Q245: What was the primary objective of WAIC?",
+    options: ["(A) Promoting foreign investment", "(B) Reducing tax rates", "(C) Combating corruption and promoting discipline", "(D) Encouraging youth migration"],
+    answer: 2
+  },
+  {
+    question: "Q246: Which agency was not associated with executing WAIC?",
+    options: ["(A) Economic and Financial Crimes Commission (EFCC)", "(B) National Orientation Agency (NOA)", "(C) Code of Conduct Bureau (CCB)", "(D) Independent Corrupt Practices Commission (ICPC)"],
+    answer: 0
+  },
+  {
+    question: "Q247: One of the key focus areas of WAI and WAIC was to instill what in public life?",
+    options: ["(A) Fear", "(B) Discipline", "(C) Wealth creation", "(D) Infrastructure development"],
+    answer: 1
+  },
+  {
+    question: "Q248: Which of the following was not a component of the original WAI campaign?",
+    options: ["(A) Civic Culture", "(B) Environmental Sanitation", "(C) Anti-Corruption Tribunal", "(D) Nationalism and Patriotism"],
+    answer: 2
+  },
+  {
+    question: "Q249: WAI under Buhari’s democratic government was perceived by critics as:",
+    options: ["(A) Completely ineffective", "(B) A political witch-hunt", "(C) A youth empowerment scheme", "(D) A financial relief package"],
+    answer: 1
+  },
+  {
+    question: "Q250: Which of these describes the challenges faced by WAIC in Nigeria?",
+    options: ["(A) High public support", "(B) Adequate funding and full media coverage", "(C) Strong political will", "(D) Foreign intervention and socio-political sabotage"],
+    answer: 3
+  },
+  {
+    question: "Q251: What was the main goal of MAMSER?",
+    options: ["(A) Promote political violence", "(B) Encourage dependency on foreign aid", "(C) Promote self-reliance and national consciousness", "(D) Introduce military rule"],
+    answer: 2
+  },
+  {
+    question: "Q252: When was MAMSER officially launched in Nigeria?",
+    options: ["(A) 1983", "(B) 1986", "(C) 1993", "(D) 2000"],
+    answer: 1
+  },
+  {
+    question: "Q253: Which Nigerian leader introduced MAMSER?",
+    options: ["(A) General Yakubu Gowon", "(B) General Ibrahim Babangida", "(C) President Olusegun Obasanjo", "(D) General Sani Abacha"],
+    answer: 1
+  },
+  {
+    question: "Q254: MAMSER aimed at all of the following EXCEPT:",
+    options: ["(A) Promoting democratic values", "(B) Creating public awareness", "(C) Supporting military dictatorship", "(D) Encouraging community development"],
+    answer: 2
+  },
+  {
+    question: "Q255: What replaced MAMSER in 1993?",
+    options: ["(A) EFCC", "(B) NOA (National Orientation Agency)", "(C) ICPC", "(D) NYSC"],
+    answer: 1
+  },
+  {
+    question: "Q256: Which of the following best describes self-reliance as promoted by MAMSER?",
+    options: ["(A) Relying on international support", "(B) Depending on imported goods", "(C) Using local resources and skills for development", "(D) Seeking foreign investors only"],
+    answer: 2
+  },
+  {
+    question: "Q257: One major strategy of MAMSER was:",
+    options: ["(A) Ignoring rural communities", "(B) Mobilizing people for arms struggle", "(C) Sensitizing citizens through mass education", "(D) Closing local industries"],
+    answer: 2
+  },
+  {
+    question: "Q258: MAMSER encouraged Nigerians to:",
+    options: ["(A) Embrace foreign culture", "(B) Participate in nation-building", "(C) Avoid paying taxes", "(D) Rely solely on government employment"],
+    answer: 1
+  },
+  {
+    question: "Q259: The slogan 'Think Nigeria, Buy Nigeria' relates to which aspect of MAMSER?",
+    options: ["(A) Political education", "(B) Economic self-reliance", "(C) Religious tolerance", "(D) International diplomacy"],
+    answer: 1
+  },
+  {
+    question: "Q260: One of the values promoted by MAMSER was:",
+    options: ["(A) Corruption", "(B) Tribalism", "(C) Patriotism", "(D) Apathy"],
+    answer: 2
+  },
+  {
+    question: "Q261: What year was the National Orientation Agency (NOA) established in Nigeria?",
+    options: ["(A) 1983", "(B) 1986", "(C) 1993", "(D) 1999"],
+    answer: 2
+  },
+  {
+    question: "Q262: The National Orientation Agency was established to replace which of the following?",
+    options: ["(A) MAMSER", "(B) NAFDAC", "(C) NYSC", "(D) NDLEA"],
+    answer: 0
+  },
+  {
+    question: "Q263: What does MAMSER stand for?",
+    options: ["(A) Mass Mobilization for Social and Economic Rights", "(B) Mass Mobilization for Self Reliance, Social Justice and Economic Recovery", "(C) Mobilization Against Social and Economic Recession", "(D) Ministry for Agricultural and Social Empowerment"],
+    answer: 1
+  },
+  {
+    question: "Q264: Which of the following is NOT a function of the National Orientation Agency?",
+    options: ["(A) Promoting patriotism and national unity", "(B) Enforcing criminal laws", "(C) Disseminating government policies", "(D) Educating the public on civic responsibilities"],
+    answer: 1
+  },
+  {
+    question: "Q265: The motto of the National Orientation Agency is:",
+    options: ["(A) Justice, Unity and Peace", "(B) Patriotism, Integrity and National Service", "(C) Do the Right Thing", "(D) Nigeria First"],
+    answer: 2
+  },
+  {
+    question: "Q266: Who appoints the Director-General of the National Orientation Agency?",
+    options: ["(A) Senate", "(B) Minister of Information", "(C) President of Nigeria", "(D) National Assembly"],
+    answer: 2
+  },
+  {
+    question: "Q267: Which government ministry supervises the National Orientation Agency?",
+    options: ["(A) Ministry of Youth and Sports", "(B) Ministry of Education", "(C) Ministry of Information and National Orientation", "(D) Ministry of Internal Affairs"],
+    answer: 2
+  },
+  {
+    question: "Q268: Which of the following best describes one of NOA’s core responsibilities?",
+    options: ["(A) Conducting military recruitment", "(B) Educating citizens on electoral processes", "(C) Collecting taxes", "(D) Issuing business licenses"],
+    answer: 1
+  },
+  {
+    question: "Q269: One of the key campaigns of the NOA is called:",
+    options: ["(A) Not Too Young to Run", "(B) Do the Right Thing", "(C) Green Nigeria", "(D) Vote Right"],
+    answer: 1
+  },
+  {
+    question: "Q270: The headquarters of the National Orientation Agency is located in which Nigerian city?",
+    options: ["(A) Lagos", "(B) Enugu", "(C) Abuja", "(D) Kaduna"],
+    answer: 2
+  },
+  {
+    question: "Q271: Who launched the Operation Feed the Nation program?",
+    options: ["(A) General Yakubu Gowon", "(B) General Olusegun Obasanjo", "(C) Shehu Shagari", "(D) Murtala Mohammed"],
+    answer: 1
+  },
+  {
+    question: "Q272: What was the major aim of OFN?",
+    options: ["(A) Eradicate corruption", "(B) Improve literacy", "(C) Increase food production", "(D) Promote industrialization"],
+    answer: 2
+  },
+  {
+    question: "Q273: What was a major limitation of the Green Revolution?",
+    options: ["(A) Excessive imports", "(B) Poor implementation and corruption", "(C) Lack of military support", "(D) Natural disasters"],
+    answer: 1
+  },
+  {
+    question: "Q274: Green Revolution focused on...",
+    options: ["(A) Military expansion", "(B) Urban renewal", "(C) Agricultural self-sufficiency", "(D) Education reform"],
+    answer: 2
+  },
+  {
+    question: "Q275: WAI emphasized all EXCEPT...",
+    options: ["(A) Orderliness", "(B) Patriotism", "(C) Bribery", "(D) Discipline"],
+    answer: 2
+  },
+  {
+    question: "Q276: WAIC was introduced by...",
+    options: ["(A) Buhari/Idiagbon", "(B) Obasanjo", "(C) Abacha", "(D) Babangida"],
+    answer: 1
+  },
+  {
+    question: "Q277: MAMSER was launched in what year?",
+    options: ["(A) 1983", "(B) 1985", "(C) 1987", "(D) 1989"],
+    answer: 2
+  },
+  {
+    question: "Q278: The MAMSER programme was established under which regime?",
+    options: ["(A) Shehu Shagari", "(B) Muhammadu Buhari", "(C) Ibrahim Babangida", "(D) Sani Abacha"],
+    answer: 2
+  },
+  {
+    question: "Q279: The leader of MAMSER was...",
+    options: ["(A) Jerry Gana", "(B) Dora Akunyili", "(C) Bolaji Akinyemi", "(D) Ibrahim Dasuki"],
+    answer: 0
+  },
+  {
+    question: "Q280: Which of the following was not emphasized by WAI?",
+    options: ["(A) Loyalty", "(B) Discipline", "(C) Accountability", "(D) Foreign investment"],
+    answer: 3
+  },
+  {
+    question: "Q281: Who is the current President of Nigeria as of 2025?",
+    options: ["(A) Muhammadu Buhari", "(B) Bola Ahmed Tinubu", "(C) Goodluck Jonathan", "(D) Atiku Abubakar"],
+    answer: 1
+  },
+  {
+    question: "Q282: Which political party is currently in power at the federal level in Nigeria?",
+    options: ["(A) PDP", "(B) LP", "(C) APC", "(D) SDP"],
+    answer: 2
+  },
+  {
+    question: "Q283: Who is the current Senate President of Nigeria?",
+    options: ["(A) Ahmed Lawan", "(B) Godswill Akpabio", "(C) Orji Uzor Kalu", "(D) David Mark"],
+    answer: 1
+  },
+  {
+    question: "Q284: What is the name of the student loan act signed into law in 2023?",
+    options: ["(A) National Education Bill", "(B) Student Support Act", "(C) Student Loan Act", "(D) Nigerian Tertiary Education Fund Act"],
+    answer: 2
+  },
+  {
+    question: "Q285: Which region in Nigeria recently witnessed renewed agitation for Biafra?",
+    options: ["(A) South-South", "(B) North-East", "(C) South-East", "(D) North-Central"],
+    answer: 2
+  },
+  {
+    question: "Q286: The removal of fuel subsidy in 2023 led to which of the following?",
+    options: ["(A) Decrease in transportation cost", "(B) Inflation and protests", "(C) Strengthening of the naira", "(D) Decrease in unemployment"],
+    answer: 1
+  },
+  {
+    question: "Q287: Who is the current Minister of the Federal Capital Territory (FCT)?",
+    options: ["(A) Babatunde Fashola", "(B) Nyesom Wike", "(C) Nasir El-Rufai", "(D) Rotimi Amaechi"],
+    answer: 1
+  },
+  {
+    question: "Q288: Which of the following is a major cause of insecurity in Northern Nigeria?",
+    options: ["(A) Oil spillage", "(B) Boko Haram insurgency", "(C) Pirate attacks", "(D) Land use conflict"],
+    answer: 1
+  },
+  {
+    question: "Q289: Nigeria’s 2024 budget is tagged:",
+    options: ["(A) Budget of National Revival", "(B) Budget of Hope", "(C) Budget of Renewed Hope", "(D) Budget of Transformation"],
+    answer: 2
+  },
+  {
+    question: "Q290: The National Assembly is made up of how many chambers?",
+    options: ["(A) One", "(B) Two", "(C) Three", "(D) Four"],
+    answer: 1
+  },
+  {
+    question: "Q291: Which Nigerian music genre has gained massive global popularity in recent years?",
+    options: ["(A) Fuji", "(B) Juju", "(C) Afrobeats", "(D) Highlife"],
+    answer: 2
+  },
+  {
+    question: "Q292: Who won the 2024 Headies Award for Artiste of the Year?",
+    options: ["(A) Burna Boy", "(B) Rema", "(C) Asake", "(D) Davido"],
+    answer: 2
+  },
+  {
+    question: "Q293: Which Nigerian filmmaker’s movie was nominated for the 2024 Oscars?",
+    options: ["(A) Kunle Afolayan", "(B) Mo Abudu", "(C) Genevieve Nnaji", "(D) Kemi Adetiba"],
+    answer: 0
+  },
+  {
+    question: "Q294: Which Nigerian cultural festival attracts global attention in Osun State?",
+    options: ["(A) Argungu Festival", "(B) Eyo Festival", "(C) Osun-Osogbo Festival", "(D) New Yam Festival"],
+    answer: 2
+  },
+  {
+    question: "Q295: What is the official language of Nigeria?",
+    options: ["(A) Hausa", "(B) Yoruba", "(C) Igbo", "(D) English"],
+    answer: 3
+  },
+  {
+    question: "Q296: Which Nigerian fashion event is internationally recognized?",
+    options: ["(A) Lagos Fashion Week", "(B) Abuja Couture Show", "(C) Port Harcourt Runway", "(D) Naija Designers Gala"],
+    answer: 0
+  },
+  {
+    question: "Q297: Which Nigerian was appointed Director-General of the World Trade Organization in 2021 and still holds the position?",
+    options: ["(A) Dora Akunyili", "(B) Ngozi Okonjo-Iweala", "(C) Obiageli Ezekwesili", "(D) Amina Mohammed"],
+    answer: 1
+  },
+  {
+    question: "Q298: The Yoruba traditional worship of ‘Sango’ represents what?",
+    options: ["(A) God of Iron", "(B) God of Water", "(C) God of Thunder", "(D) God of Harvest"],
+    answer: 2
+  },
+  {
+    question: "Q299: Which Nigerian author is known for promoting feminist literature and global advocacy?",
+    options: ["(A) Chimamanda Ngozi Adichie", "(B) Wole Soyinka", "(C) Buchi Emecheta", "(D) Helon Habila"],
+    answer: 0
+  },
+  {
+    question: "Q300: What is the major impact of Nollywood on Nigerian culture?",
+    options: ["(A) Promotes only Western values", "(B) Diminishes traditional beliefs", "(C) Promotes local stories and cultural identity", "(D) Focuses only on politics"],
+    answer: 2
+  }
+];
+
+let questions = [], currentQuestion = 0, userAnswers = [], player = "", firstStart = true, timerInterval;
+
+const passcodeScreen = document.getElementById("passcode-screen");
+const passcodeBtn = document.getElementById("passcode-btn");
+const passcodeError = document.getElementById("passcode-error");
+const introEl = document.getElementById("intro");
+const quizContainer = document.getElementById("quiz-container");
+const quizEl = document.getElementById("quiz");
+const nextBtn = document.getElementById("next-btn");
+const prevBtn = document.getElementById("prev-btn");
+const submitBtn = document.getElementById("submit-btn");
+const resultEl = document.getElementById("result");
+const startBtn = document.getElementById("start-btn");
+const togglePass = document.getElementById("toggle-pass");
+const passInput = document.getElementById("passcode");
+const timerEl = document.getElementById("timer");
+
+introEl.style.display = "none";
+
+// PASSCODE
+passcodeBtn.onclick = () => {
+  if (passInput.value.trim() === "justsayhanson") {
+    passcodeScreen.style.display = "none";
+    introEl.style.display = "block";
+  } else passcodeError.style.display = "block";
+};
+togglePass.onclick = () => {
+  if (passInput.type === "password") { passInput.type="text"; togglePass.innerText="🙈"; }
+  else { passInput.type="password"; togglePass.innerText="👁"; }
+};
+passInput.addEventListener("input",()=>passcodeError.style.display="none");
+
+// START QUIZ
+startBtn.onclick = () => {
+  const nameInput = document.getElementById("playerName").value.trim();
+  if(!nameInput){ alert("Please enter your name."); return; }
+  player = nameInput;
+  questions = pickRandomQuestions(50);
+  userAnswers = Array(questions.length).fill(null);
+  currentQuestion = 0;
+  introEl.style.display="none";
+  quizContainer.style.display="block";
+  if(firstStart){ showWelcome(); firstStart=false; } 
+  else { loadQuestion(); startTimer(30*60); }
+};
+
+function pickRandomQuestions(num=50){
+  const shuffled = [...questionsBank].sort(()=>Math.random()-0.5);
+  return shuffled.slice(0,num);
+}
+
+function showWelcome(){
+  quizEl.innerHTML = `<div style="text-align:center; animation: fadeIn 1s ease;">
+    <h2>🎉 Welcome, ${player}!</h2>
+    <p>Get ready for the GES Peoples & Culture Study Quiz.</p>
+    <p style="font-style: italic; font-size:14px; margin-top:15px; opacity:0.9;">
+      This experience is brought to you by <strong>Hanson Solomon Michael</strong>.
+    </p>
+    <button id="begin-btn">Start Now 🚀</button>
+  </div>`;
+  prevBtn.style.display="none"; nextBtn.style.display="none"; submitBtn.style.display="none";
+  document.getElementById("begin-btn").onclick = () => { loadQuestion(); startTimer(30*60); nextBtn.style.display="inline-block"; };
+}
+
+function updateProgress(){
+  const percent = Math.round(((currentQuestion+1)/questions.length)*100);
+  const bar = document.getElementById("progress-bar");
+  bar.style.width = percent+"%"; bar.innerText = percent+"%";
+}
+
+function loadQuestion(){
+  const q = questions[currentQuestion];
+  document.getElementById("question-info").innerText = `Question ${currentQuestion+1} of ${questions.length}`;
+  quizEl.innerHTML = `<div class="question">${q.question}</div><div class="options" id="options"></div>`;
+  const optionsEl = document.getElementById("options");
+
+  nextBtn.disabled = userAnswers[currentQuestion] === null;
+  submitBtn.disabled = userAnswers[currentQuestion] === null;
+
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement("button");
+    btn.className="option"; btn.innerText=opt;
+    if(userAnswers[currentQuestion]===i) btn.classList.add("selected");
+    btn.onclick = ()=>{
+      document.querySelectorAll(".option").forEach(el=>el.classList.remove("selected"));
+      btn.classList.add("selected");
+      userAnswers[currentQuestion]=i;
+      nextBtn.disabled=false;
+      submitBtn.disabled=false;
+    };
+    optionsEl.appendChild(btn);
+  });
+
+  prevBtn.style.display=currentQuestion===0?"none":"inline-block";
+  nextBtn.style.display=currentQuestion===questions.length-1?"none":"inline-block";
+  submitBtn.style.display=currentQuestion===questions.length-1?"inline-block":"none";
+
+  updateProgress();
+}
+
+nextBtn.onclick=()=>{ if(currentQuestion<questions.length-1){ currentQuestion++; loadQuestion(); } };
+prevBtn.onclick=()=>{ if(currentQuestion>0){ currentQuestion--; loadQuestion(); } };
+
+submitBtn.onclick=()=>{
+  clearInterval(timerInterval);
+  let score=0, review="<div class='review'><h3>Review of Wrong Answers:</h3>";
+  userAnswers.forEach((ans,i)=>{
+    if(ans===questions[i].answer) score++;
+    else {
+      review+=`<p><strong>Q${i+1}:</strong> ${questions[i].question}<br>
+      ❌ Your answer: ${ans!==null?questions[i].options[ans]:"No answer"}<br>
+      ✅ Correct answer: ${questions[i].options[questions[i].answer]}</p>`;
+    }
+  });
+  review+="</div>";
+  const percent=Math.round((score/questions.length)*100);
+  let feedback="";
+  if(score===questions.length) feedback=`🌟 Excellent, ${player}! God forbid!!! You too sabi book... You're the G.O.A.T!!! 💪🔥`;
+  else if(score>=questions.length*0.7) feedback=`👏 That's great oh, ${player}! You see that word "Brilliant", na you get am.`;
+  else if(score>=questions.length*0.4) feedback=`👍 Not bad, ${player}. Keep pushing!`;
+  else feedback=`💡 Don't give up, ${player}. Study harder and try again!`;
+
+  resultEl.innerHTML=`
+    <h2>${player}, Score: ${score}/${questions.length} (${percent}%)</h2>
+    <p>${feedback}</p>${review}
+    <button id="restart-btn">Restart Quiz</button>`;
+  quizEl.style.display="none"; nextBtn.style.display="none"; prevBtn.style.display="none"; submitBtn.style.display="none";
+  document.getElementById("restart-btn").onclick=()=>restartQuiz();
+};
+
+function restartQuiz(){
+  questions=pickRandomQuestions(50);
+  userAnswers=Array(questions.length).fill(null);
+  currentQuestion=0;
+  quizEl.style.display="block"; resultEl.innerHTML="";
+  loadQuestion(); nextBtn.style.display="inline-block"; prevBtn.style.display="none"; submitBtn.style.display="none";
+  document.getElementById("progress-bar").style.width="0%"; document.getElementById("progress-bar").innerText="0%";
+  startTimer(30*60);
+}
+
+// ===== TIMER =====
+function startTimer(duration){
+  clearInterval(timerInterval);
+  let time=duration;
+  updateTimerDisplay(time);
+  timerInterval = setInterval(()=>{
+    time--;
+    updateTimerDisplay(time);
+    if(time<=0){
+      clearInterval(timerInterval);
+      alert("⏰ Time's up! The quiz will be submitted automatically.");
+      submitBtn.click();
+    }
+  },1000);
+}
+
+function updateTimerDisplay(time){
+  let mins = Math.floor(time/60);
+  let secs = time % 60;
+  timerEl.innerText = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  if(time<=300){ // 5 min warning
+    timerEl.classList.add("warning");
+  } else {
+    timerEl.classList.remove("warning");
+  }
+}
+</script>
+</body>
+</html>   
